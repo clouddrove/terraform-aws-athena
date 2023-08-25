@@ -32,8 +32,8 @@ module "athena" {
     database1 = {
       force_destroy = true
       properties = {
-      custom_prop_1 = "example"
+        custom_prop_1 = "example"
       }
-    } 
+    }
   }
 }

@@ -157,11 +157,11 @@ variable "databases" {
 variable "data_catalogs" {
   description = "Map of Athena data catalogs and related configuration."
   type        = map(any)
-  default = {}
+  default     = {}
 }
 
 variable "named_queries" {
   description = "Map of Athena named queries and related configuration."
   type        = map(map(string))
-  default = {}
+  default     = {}
 }

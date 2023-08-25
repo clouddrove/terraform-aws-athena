@@ -12,10 +12,10 @@ provider "aws" {
 # ------------------------------------------------------------------------------
 # Provider
 # ------------------------------------------------------------------------------
-locals{
-    name        = "athena"
-    environment = "test"
-    label_order = ["name", "environment"]
+locals {
+  name        = "athena"
+  environment = "test"
+  label_order = ["name", "environment"]
 }
 
 # ------------------------------------------------------------------------------
@@ -46,32 +46,32 @@ module "athena" {
   workgroup_force_destroy = true
 
   # S3 Bucket Configuration
-  create_s3_bucket     =  false
-  athena_s3_bucket_id  = module.s3_bucket.id
-  s3_output_path       = "outputs/" # The S3 bucket path used to store query results
+  create_s3_bucket    = false
+  athena_s3_bucket_id = module.s3_bucket.id
+  s3_output_path      = "outputs/" # The S3 bucket path used to store query results
 
   # Database for Athena
   databases = {
     database1 = {
       force_destroy = true
       properties = {
-      custom_prop_1 = "example"
+        custom_prop_1 = "example"
       }
-    } 
+    }
   }
 
-	# Data catalog to test terraform
+  # Data catalog to test terraform
   data_catalogs = {
     glue1 = {
       description = "This is an example to test Terraform"
       type        = "GLUE"
-      parameters  = {
+      parameters = {
         catalog-id : "123456789012" # The catalog_id is the account ID of the AWS account to which the AWS Glue catalog belongs.
       }
     }
   }
 
-	# Named Queries to test terarform
+  # Named Queries to test terarform
   named_queries = {
     query1 = {
       database    = "database1"
