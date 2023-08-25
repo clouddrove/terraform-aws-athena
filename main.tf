@@ -20,9 +20,9 @@ locals {
   kms_key_arn  = var.create_kms_key ? try(aws_kms_key.default[0].arn, null) : var.athena_kms_key
 }
 
-# ------------------------------------------------------------------------------
-# S3 Bucket
-# ------------------------------------------------------------------------------
+##------------------------------------------------------------------------------
+## S3 Bucket
+##------------------------------------------------------------------------------
 
 module "s3_bucket" {
   source  = "clouddrove/s3/aws"
@@ -37,14 +37,15 @@ module "s3_bucket" {
   force_destroy = var.bucket_force_destroy
 }
 
-# ------------------------------------------------------------------------------
-# KMS Encryption
-# ------------------------------------------------------------------------------
+##------------------------------------------------------------------------------
+## KMS Encryption
+##------------------------------------------------------------------------------
 
 resource "aws_kms_key" "default" {
   count = var.enabled && var.create_kms_key ? 1 : 0
 
   deletion_window_in_days = var.athena_kms_key_deletion_window
+  enable_key_rotation     = true
   description             = "Athena KMS Key for Athena Workgroup"
   tags                    = module.labels.tags
 }
@@ -53,13 +54,14 @@ resource "aws_kms_key" "database" {
   count = var.enabled && var.create_kms_key ? 1 : 0
 
   deletion_window_in_days = var.athena_kms_key_deletion_window
+  enable_key_rotation     = true
   description             = "Athena KMS Key for Database"
   tags                    = module.labels.tags
 }
 
-# ------------------------------------------------------------------------------
-# AWS Athena Resources
-# ------------------------------------------------------------------------------
+##------------------------------------------------------------------------------
+## AWS Athena Resources
+##------------------------------------------------------------------------------
 
 resource "aws_athena_workgroup" "default" {
   count = var.enabled ? 1 : 0
@@ -86,8 +88,7 @@ resource "aws_athena_workgroup" "default" {
 }
 
 resource "aws_athena_database" "default" {
-  for_each = var.enabled ? var.databases : {}
-
+  for_each   = var.enabled ? var.databases : {}
   name       = each.key
   bucket     = local.s3_bucket_id
   comment    = try(each.value.comment, null)
@@ -110,17 +111,14 @@ resource "aws_athena_database" "default" {
 
   expected_bucket_owner = try(each.value.expected_bucket_owner, null)
   force_destroy         = try(each.value.force_destroy, false)
-
 }
 
 resource "aws_athena_data_catalog" "default" {
-  for_each = var.enabled ? var.data_catalogs : {}
-
+  for_each    = var.enabled ? var.data_catalogs : {}
   name        = "${var.name}-${each.key}"
   description = each.value.description
   type        = each.value.type
-
-  parameters = each.value.parameters
+  parameters  = each.value.parameters
 
   tags = merge(
     module.labels.tags,
