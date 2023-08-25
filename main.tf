@@ -45,7 +45,15 @@ resource "aws_kms_key" "default" {
   count = var.enabled && var.create_kms_key ? 1 : 0
 
   deletion_window_in_days = var.athena_kms_key_deletion_window
-  description             = "Athena KMS Key"
+  description             = "Athena KMS Key for Athena Workgroup"
+  tags                    = module.labels.tags
+}
+
+resource "aws_kms_key" "database" {
+  count = var.enabled && var.create_kms_key ? 1 : 0
+
+  deletion_window_in_days = var.athena_kms_key_deletion_window
+  description             = "Athena KMS Key for Database"
   tags                    = module.labels.tags
 }
 
@@ -96,7 +104,7 @@ resource "aws_athena_database" "default" {
     for_each = try(each.value.encryption_configuration, null) != null ? ["true"] : []
     content {
       encryption_option = each.value.encryption_configuration.encryption_option
-      kms_key           = each.value.encryption_configuration.kms_key
+      kms_key           = try(aws_kms_key.database[0].arn, each.value.encryption_configuration.kms_key)
     }
   }
 

@@ -34,6 +34,9 @@ module "athena" {
       properties = {
         custom_prop_1 = "example"
       }
+      encryption_configuration = {
+        encryption_option = "SSE_KMS"
+      }
     }
   }
 }

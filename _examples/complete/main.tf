@@ -31,6 +31,11 @@ module "s3_bucket" {
   force_destroy = true
 }
 
+resource "aws_kms_key" "database" {
+  deletion_window_in_days = 7
+  description             = "Athena KMS Key for Database"
+}
+
 # ------------------------------------------------------------------------------
 # AWS Athena Module
 # ------------------------------------------------------------------------------
@@ -56,6 +61,9 @@ module "athena" {
       force_destroy = true
       properties = {
         custom_prop_1 = "example"
+      }
+      encryption_configuration = {
+        encryption_option = "SSE_KMS"
       }
     }
   }
