@@ -4,20 +4,20 @@
 
 
 <h1 align="center">
-    Terraform Module Template
+    Terraform Module Athena
 </h1>
 
 <p align="center" style="font-size: 1.2rem;"> 
-    Terraform module template to create new modules using this as baseline
+    Terraform Athena module to create new modules using this as baseline
      </p>
 
 <p align="center">
 
-<a href="https://github.com/clouddrove/terraform-module-template/releases/latest">
-  <img src="https://img.shields.io/github/release/clouddrove/terraform-module-template.svg" alt="Latest Release">
+<a href="https://github.com/clouddrove/terraform-aws-athena/releases/latest">
+  <img src="https://img.shields.io/github/release/clouddrove/terraform-aws-athena.svg" alt="Latest Release">
 </a>
 <a href="">
-  <img src="https://github.com/clouddrove/terraform-module-template/actions/workflows/tfsec.yml/badge.svg" alt="tfsec">
+  <img src="https://github.com/clouddrove/terraform-aws-athena/actions/workflows/tfsec.yml/badge.svg" alt="tfsec">
 </a>
 <a href="LICENSE.md">
   <img src="https://img.shields.io/badge/License-APACHE-blue.svg" alt="Licence">
@@ -27,13 +27,13 @@
 </p>
 <p align="center">
 
-<a href='https://facebook.com/sharer/sharer.php?u=https://github.com/clouddrove/terraform-module-template'>
+<a href='https://facebook.com/sharer/sharer.php?u=https://github.com/clouddrove/terraform-aws-athena'>
   <img title="Share on Facebook" src="https://user-images.githubusercontent.com/50652676/62817743-4f64cb80-bb59-11e9-90c7-b057252ded50.png" />
 </a>
-<a href='https://www.linkedin.com/shareArticle?mini=true&title=Terraform+Module+Template&url=https://github.com/clouddrove/terraform-module-template'>
+<a href='https://www.linkedin.com/shareArticle?mini=true&title=Terraform+Module+Athena&url=https://github.com/clouddrove/terraform-aws-athena'>
   <img title="Share on LinkedIn" src="https://user-images.githubusercontent.com/50652676/62817742-4e339e80-bb59-11e9-87b9-a1f68cae1049.png" />
 </a>
-<a href='https://twitter.com/intent/tweet/?text=Terraform+Module+Template&url=https://github.com/clouddrove/terraform-module-template'>
+<a href='https://twitter.com/intent/tweet/?text=Terraform+Module+Athena&url=https://github.com/clouddrove/terraform-aws-athena'>
   <img title="Share on Twitter" src="https://user-images.githubusercontent.com/50652676/62817740-4c69db00-bb59-11e9-8a79-3580fbbf6d5c.png" />
 </a>
 
@@ -64,12 +64,101 @@ This module has a few dependencies:
 ## Examples
 
 
-**IMPORTANT:** Since the `master` branch used in `source` varies based on new modifications, we suggest that you use the release versions [here](https://github.com/clouddrove/terraform-module-template/releases).
+**IMPORTANT:** Since the `master` branch used in `source` varies based on new modifications, we suggest that you use the release versions [here](https://github.com/clouddrove/terraform-aws-athena/releases).
 
 
 Here are some examples of how you can use this module in your inventory structure:
+## Basic Example to create a basic AWS Athena without extra configs
 ```hcl
-  ```
+module "athena" {
+  source  = "clouddrove/athena/aws"
+  version = "1.0.0"
+
+  name        = "athena"
+  environment = "test"
+  label_order = ["name", "environment"]
+
+  enabled                 = true
+  workgroup_force_destroy = true
+
+  # S3 Bucket Configuration
+  bucket_force_destroy = true
+  s3_output_path       = "accessLogs/queryresults/" # The S3 bucket path used to store query results
+
+  # Database for Athena
+  databases = {
+    database1 = {
+      force_destroy = true
+      properties    = {
+      custom_prop_1 = "example"
+      }
+    } 
+  }
+}
+```
+
+## Complete Example to create a basic AWS Athena without extra configs
+```hcl
+locals {
+  name        = "athena"
+  environment = "test"
+  label_order = ["name", "environment"]
+}
+
+module "s3_bucket" {
+  source        = "clouddrove/s3/aws"
+  version       = "1.3.0"
+  name          = format("%s-bucket-test", local.name)
+  versioning    = true
+  acl           = "private"
+  force_destroy = true
+}
+
+module "athena" {
+  source                  = "clouddrove/athena/aws"
+  version                 = "1.0.0"
+  name                    = local.name
+  environment             = local.environment
+  label_order             = local.label_order
+  enabled                 = true
+  workgroup_force_destroy = true
+
+  # S3 Bucket Configuration
+  create_s3_bucket     =  false
+  athena_s3_bucket_id  = module.s3_bucket.id
+  s3_output_path       = "outputs/" # The S3 bucket path used to store query results
+
+  # Database for Athena
+  databases = {
+    database1 = {
+      force_destroy = true
+      properties = {
+      custom_prop_1 = "example"
+      }
+    } 
+  }
+
+  # Data catalog to test terraform
+  data_catalogs = {
+    glue1 = {
+      description = "This is an example to test Terraform"
+      type        = "GLUE"
+      parameters  = {
+        catalog-id : "123456789012" # The catalog_id is the account ID of the AWS account to which the AWS Glue catalog belongs.
+      }
+    }
+  }
+
+  # Named Queries to test terarform
+  named_queries = {
+    query1 = {
+      database    = "database1"
+      description = "This is an example query to test Terraform"
+      query       = "SELECT * FROM %s limit 10;"
+    }
+  }
+}
+```
 
 
 
@@ -80,13 +169,46 @@ Here are some examples of how you can use this module in your inventory structur
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| label\_order | Label order, e.g. `name`,`environment`. | `list(string)` | <pre>[<br>  "name",<br>  "environment"<br>]</pre> | no |
+| athena\_kms\_key | Use an existing KMS key for Athena if `create_workgroup_kms_key` is `false`. | `string` | `null` | no |
+| athena\_s3\_bucket\_id | Use an existing S3 bucket for Athena query results if `create_s3_bucket` is `false`. | `string` | `null` | no |
+| bucket\_acl | Canned ACL to apply to the S3 bucket. | `string` | `null` | no |
+| bucket\_force\_destroy | A boolean that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable. | `bool` | `false` | no |
+| bucket\_label\_order | Label order, e.g. `name`,`application` for S3 Bucket. | `list(any)` | <pre>[<br>  "name"<br>]</pre> | no |
+| bucket\_versioning | Enable Versioning of S3. | `bool` | `true` | no |
+| bytes\_scanned\_cutoff\_per\_query | Integer for the upper data usage limit (cutoff) for the amount of bytes a single query in a workgroup is allowed to scan. Must be at least 10485760. | `number` | `null` | no |
+| create\_database\_kms\_key | Enable the creation of a KMS key used by Athena database. | `bool` | `true` | no |
+| create\_s3\_bucket | Conditionally create S3 bucket. | `bool` | `true` | no |
+| create\_workgroup\_kms\_key | Enable the creation of a KMS key used by Athena workgroup. | `bool` | `true` | no |
+| data\_catalogs | Map of Athena data catalogs and related configuration. | `map(any)` | `{}` | no |
+| databases | Map of Athena databases and related configuration. | `map(any)` | n/a | yes |
+| deletion\_window\_in\_days | Duration in days after which the key is deleted after destruction of the resource. | `number` | `7` | no |
+| enabled | Set to false to prevent the module from creating AWS Athena related resources. | `bool` | `false` | no |
+| enforce\_workgroup\_configuration | Boolean whether the settings for the workgroup override client-side settings. | `bool` | `true` | no |
+| environment | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
+| kms\_key\_enabled | Specifies whether the kms is enabled or disabled. | `bool` | `true` | no |
+| label\_order | Label order, e.g. `name`,`application`. | `list(any)` | `[]` | no |
+| managedby | ManagedBy, eg 'CloudDrove'. | `string` | `"hello@clouddrove.com"` | no |
+| multi\_region | Indicates whether the KMS key is a multi-Region (true) or regional (false) key. | `bool` | `true` | no |
+| name | Name  (e.g. `app` or `cluster`). | `string` | `""` | no |
+| named\_queries | Map of Athena named queries and related configuration. | `map(map(string))` | `{}` | no |
+| publish\_cloudwatch\_metrics\_enabled | Boolean whether Amazon CloudWatch metrics are enabled for the workgroup. | `bool` | `true` | no |
+| repository | Terraform current module repo | `string` | `"https://github.com/clouddrove/terraform-aws-athena"` | no |
+| s3\_output\_path | The S3 bucket path used to store query results. | `string` | `""` | no |
+| tags | Additional tags (e.g. map(`BusinessUnit`,`XYZ`). | `map(any)` | `{}` | no |
+| workgroup\_encryption\_option | Indicates whether Amazon S3 server-side encryption with Amazon S3-managed keys (SSE\_S3), server-side encryption with KMS-managed keys (SSE\_KMS), or client-side encryption with KMS-managed keys (CSE\_KMS) is used. | `string` | `"SSE_KMS"` | no |
+| workgroup\_force\_destroy | The option to delete the workgroup and its contents even if the workgroup contains any named queries. | `bool` | `false` | no |
 
 ## Outputs
 
 | Name | Description |
 |------|-------------|
-| label\_order | Label order. |
+| bucket\_arn | ID of S3 bucket used by Athena. |
+| bucket\_id | ID of S3 bucket used by Athena. |
+| data\_catalogs | List of newly created Athena data catalogs. |
+| databases | List of newly created Athena databases. |
+| kms\_key\_arn | ARN of KMS key used by Athena. |
+| named\_queries | List of newly created Athena named queries. |
+| workgroup\_id | ID of newly created Athena workgroup. |
 
 
 
@@ -102,9 +224,9 @@ You need to run the following command in the testing folder:
 
 
 ## Feedback 
-If you come accross a bug or have any feedback, please log it in our [issue tracker](https://github.com/clouddrove/terraform-module-template/issues), or feel free to drop us an email at [hello@clouddrove.com](mailto:hello@clouddrove.com).
+If you come accross a bug or have any feedback, please log it in our [issue tracker](https://github.com/clouddrove/terraform-aws-athena/issues), or feel free to drop us an email at [hello@clouddrove.com](mailto:hello@clouddrove.com).
 
-If you have found it worth your time, go ahead and give us a ★ on [our GitHub](https://github.com/clouddrove/terraform-module-template)!
+If you have found it worth your time, go ahead and give us a ★ on [our GitHub](https://github.com/clouddrove/terraform-aws-athena)!
 
 ## About us
 
