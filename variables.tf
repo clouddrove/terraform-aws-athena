@@ -75,26 +75,50 @@ variable "bucket_acl" {
   description = "Canned ACL to apply to the S3 bucket."
 }
 
+variable "bucket_force_destroy" {
+  type        = bool
+  default     = false
+  description = "A boolean that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
+}
+
 # ------------------------------------------------------------------------------
-# AWS Athena
+# AWS KMS
 # ------------------------------------------------------------------------------
 
-variable "create_kms_key" {
+variable "create_workgroup_kms_key" {
   description = "Enable the creation of a KMS key used by Athena workgroup."
   type        = bool
   default     = true
 }
 
+variable "create_database_kms_key" {
+  description = "Enable the creation of a KMS key used by Athena database."
+  type        = bool
+  default     = true
+}
+
 variable "athena_kms_key" {
-  description = "Use an existing KMS key for Athena if `create_kms_key` is `false`."
+  description = "Use an existing KMS key for Athena if `create_workgroup_kms_key` is `false`."
   type        = string
   default     = null
 }
 
-variable "bucket_force_destroy" {
+variable "deletion_window_in_days" {
+  type        = number
+  default     = 7
+  description = "Duration in days after which the key is deleted after destruction of the resource."
+}
+
+variable "kms_key_enabled" {
   type        = bool
-  default     = false
-  description = "A boolean that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
+  default     = true
+  description = "Specifies whether the kms is enabled or disabled."
+}
+
+variable "multi_region" {
+  type        = bool
+  default     = true
+  description = "Indicates whether the KMS key is a multi-Region (true) or regional (false) key."
 }
 
 # ------------------------------------------------------------------------------

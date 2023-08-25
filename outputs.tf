@@ -21,7 +21,7 @@ output "bucket_arn" {
 
 output "kms_key_arn" {
   description = "ARN of KMS key used by Athena."
-  value       = try(aws_kms_key.default[0].arn, null)
+  value       = try(module.kms_workgroup.key_arn, null)
 }
 
 ##------------------------------------------------------------------------------

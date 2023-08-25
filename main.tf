@@ -17,19 +17,16 @@ module "labels" {
 
 locals {
   s3_bucket_id = var.create_s3_bucket ? try(module.s3_bucket.id, null) : var.athena_s3_bucket_id
-  kms_key_arn  = var.create_kms_key ? try(aws_kms_key.default[0].arn, null) : var.athena_kms_key
+  kms_key_arn  = var.create_workgroup_kms_key ? try(module.kms_workgroup.key_arn, null) : var.athena_kms_key
 }
 
 ##------------------------------------------------------------------------------
 ## S3 Bucket
 ##------------------------------------------------------------------------------
-
 module "s3_bucket" {
-  source  = "clouddrove/s3/aws"
-  version = "1.3.0"
-
+  source        = "clouddrove/s3/aws"
+  version       = "1.3.0"
   create_bucket = var.enabled && var.create_s3_bucket
-
   name          = format("%s-bucket-athena", var.name)
   label_order   = var.bucket_label_order
   versioning    = var.bucket_versioning
@@ -40,29 +37,30 @@ module "s3_bucket" {
 ##------------------------------------------------------------------------------
 ## KMS Encryption
 ##------------------------------------------------------------------------------
-
-resource "aws_kms_key" "default" {
-  count = var.enabled && var.create_kms_key ? 1 : 0
-
-  deletion_window_in_days = var.athena_kms_key_deletion_window
-  enable_key_rotation     = true
-  description             = "Athena KMS Key for Athena Workgroup"
-  tags                    = module.labels.tags
+module "kms_workgroup" {
+  source                  = "clouddrove/kms/aws"
+  version                 = "1.3.1"
+  kms_key_enabled         = var.enabled && var.create_workgroup_kms_key
+  name                    = format("%s-workgroup-key", var.name)
+  environment             = var.environment
+  deletion_window_in_days = var.deletion_window_in_days
+  multi_region            = var.multi_region
 }
 
-resource "aws_kms_key" "database" {
-  count = var.enabled && var.create_kms_key ? 1 : 0
-
-  deletion_window_in_days = var.athena_kms_key_deletion_window
-  enable_key_rotation     = true
-  description             = "Athena KMS Key for Database"
-  tags                    = module.labels.tags
+module "kms_database" {
+  source                  = "clouddrove/kms/aws"
+  version                 = "1.3.1"
+  enabled                 = var.enabled && var.create_database_kms_key
+  name                    = format("%s-database-key", var.name)
+  environment             = var.environment
+  deletion_window_in_days = var.deletion_window_in_days
+  kms_key_enabled         = var.kms_key_enabled
+  multi_region            = var.multi_region
 }
 
 ##------------------------------------------------------------------------------
 ## AWS Athena Resources
 ##------------------------------------------------------------------------------
-
 resource "aws_athena_workgroup" "default" {
   count = var.enabled ? 1 : 0
 
@@ -105,7 +103,7 @@ resource "aws_athena_database" "default" {
     for_each = try(each.value.encryption_configuration, null) != null ? ["true"] : []
     content {
       encryption_option = each.value.encryption_configuration.encryption_option
-      kms_key           = try(aws_kms_key.database[0].arn, each.value.encryption_configuration.kms_key)
+      kms_key           = try(module.kms_database.key_arn, each.value.encryption_configuration.kms_key)
     }
   }
 
