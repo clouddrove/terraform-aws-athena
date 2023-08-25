@@ -131,12 +131,6 @@ variable "athena_s3_bucket_id" {
   default     = null
 }
 
-variable "athena_kms_key_deletion_window" {
-  description = "KMS key deletion window (in days)."
-  type        = number
-  default     = 7
-}
-
 variable "bytes_scanned_cutoff_per_query" {
   description = "Integer for the upper data usage limit (cutoff) for the amount of bytes a single query in a workgroup is allowed to scan. Must be at least 10485760."
   type        = number
