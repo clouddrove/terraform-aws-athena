@@ -5,40 +5,128 @@
 #
 
 # Name of this project
-name : Terraform Module Template
+name : Terraform Module Athena
 
 # License of this project
 license: "APACHE"
 
 # Canonical GitHub repo
-github_repo: clouddrove/terraform-module-template
+github_repo: clouddrove/terraform-aws-athena
 
 # Badges to display
 badges:
   - name: "Latest Release"
-    image: "https://img.shields.io/github/release/clouddrove/terraform-module-template.svg"
-    url: "https://github.com/clouddrove/terraform-module-template/releases/latest"
+    image: "https://img.shields.io/github/release/clouddrove/terraform-aws-athena.svg"
+    url: "https://github.com/clouddrove/terraform-aws-athena/releases/latest"
   - name: "tfsec"
-    image: "https://github.com/clouddrove/terraform-module-template/actions/workflows/tfsec.yml/badge.svg"
+    image: "https://github.com/clouddrove/terraform-aws-athena/actions/workflows/tfsec.yml/badge.svg"
     url: ""
   - name: "Licence"
     image: "https://img.shields.io/badge/License-APACHE-blue.svg"
     url: "LICENSE.md"
 
 prerequesties:
-  - name: Terraform 1.4.6
+  - name: Terraform 1.5.3
     url: https://learn.hashicorp.com/terraform/getting-started/install.html
     
 #  description of this project
 description: |-
-  Terraform module template to create new modules using this as baseline
+  Terraform Athena module to create new modules using this as baseline
 # extra content
 include:
   - "terraform.md"
 
 # How to use this project
-# How to use this project
 usage: |-
   Here are some examples of how you can use this module in your inventory structure:
+  ## Basic Example to create a basic AWS Athena without extra configs
   ```hcl
-    ```
+  module "athena" {
+    source  = "clouddrove/athena/aws"
+    version = "1.0.0"
+
+    name        = "athena"
+    environment = "test"
+    label_order = ["name", "environment"]
+
+    enabled                 = true
+    workgroup_force_destroy = true
+
+    # S3 Bucket Configuration
+    bucket_force_destroy = true
+    s3_output_path       = "accessLogs/queryresults/" # The S3 bucket path used to store query results
+
+    # Database for Athena
+    databases = {
+      database1 = {
+        force_destroy = true
+        properties    = {
+        custom_prop_1 = "example"
+        }
+      } 
+    }
+  }
+  ```
+
+  ## Complete Example to create a basic AWS Athena without extra configs
+  ```hcl
+  locals {
+    name        = "athena"
+    environment = "test"
+    label_order = ["name", "environment"]
+  }
+  
+  module "s3_bucket" {
+    source        = "clouddrove/s3/aws"
+    version       = "1.3.0"
+    name          = format("%s-bucket-test", local.name)
+    versioning    = true
+    acl           = "private"
+    force_destroy = true
+  }
+
+  module "athena" {
+    source                  = "clouddrove/athena/aws"
+    version                 = "1.0.0"
+    name                    = local.name
+    environment             = local.environment
+    label_order             = local.label_order
+    enabled                 = true
+    workgroup_force_destroy = true
+
+    # S3 Bucket Configuration
+    create_s3_bucket     =  false
+    athena_s3_bucket_id  = module.s3_bucket.id
+    s3_output_path       = "outputs/" # The S3 bucket path used to store query results
+
+    # Database for Athena
+    databases = {
+      database1 = {
+        force_destroy = true
+        properties = {
+        custom_prop_1 = "example"
+        }
+      } 
+    }
+
+    # Data catalog to test terraform
+    data_catalogs = {
+      glue1 = {
+        description = "This is an example to test Terraform"
+        type        = "GLUE"
+        parameters  = {
+          catalog-id : "123456789012" # The catalog_id is the account ID of the AWS account to which the AWS Glue catalog belongs.
+        }
+      }
+    }
+
+    # Named Queries to test terarform
+    named_queries = {
+      query1 = {
+        database    = "database1"
+        description = "This is an example query to test Terraform"
+        query       = "SELECT * FROM %s limit 10;"
+      }
+    }
+  }
+  ```
