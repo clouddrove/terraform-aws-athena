@@ -26,7 +26,7 @@ badges:
     url: "LICENSE.md"
 
 prerequesties:
-  - name: Terraform 1.4.6
+  - name: Terraform 1.5.3
     url: https://learn.hashicorp.com/terraform/getting-started/install.html
     
 #  description of this project
@@ -60,7 +60,7 @@ usage: |-
     databases = {
       database1 = {
         force_destroy = true
-        properties = {
+        properties    = {
         custom_prop_1 = "example"
         }
       } 
@@ -70,31 +70,27 @@ usage: |-
 
   ## Complete Example to create a basic AWS Athena without extra configs
   ```hcl
-  # ------------------------------------------------------------------------------
-  # AWS S3
-  # ------------------------------------------------------------------------------
+  locals {
+    name        = "athena"
+    environment = "test"
+    label_order = ["name", "environment"]
+  }
+  
   module "s3_bucket" {
-    source  = "clouddrove/s3/aws"
-    version = "1.3.0"
-
+    source        = "clouddrove/s3/aws"
+    version       = "1.3.0"
     name          = format("%s-bucket-test", local.name)
     versioning    = true
     acl           = "private"
     force_destroy = true
   }
 
-  # ------------------------------------------------------------------------------
-  # AWS Athena Module
-  # ------------------------------------------------------------------------------
-
   module "athena" {
-    source  = "clouddrove/athena/aws"
-    version = "1.0.0"
-
-    name        = local.name
-    environment = local.environment
-    label_order = local.label_order
-
+    source                  = "clouddrove/athena/aws"
+    version                 = "1.0.0"
+    name                    = local.name
+    environment             = local.environment
+    label_order             = local.label_order
     enabled                 = true
     workgroup_force_destroy = true
 
