@@ -23,7 +23,7 @@ locals {
 ##------------------------------------------------------------------------------
 module "s3_bucket" {
   source        = "clouddrove/s3/aws"
-  version       = "1.3.0"
+  version       = "2.0.0"
   name          = format("%s-bucket-test", local.name)
   versioning    = true
   acl           = "private"

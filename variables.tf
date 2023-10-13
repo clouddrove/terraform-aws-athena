@@ -63,6 +63,12 @@ variable "create_s3_bucket" {
   description = "Conditionally create S3 bucket."
 }
 
+variable "bucket_name" {
+  type        = string
+  default     = "athena-bucket"
+  description = "name of s3 bucket"
+}
+
 variable "bucket_versioning" {
   type        = bool
   default     = true
