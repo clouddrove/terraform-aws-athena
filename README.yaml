@@ -20,21 +20,38 @@ badges:
     url: "https://github.com/clouddrove/terraform-aws-athena/releases/latest"
   - name: "tfsec"
     image: "https://github.com/clouddrove/terraform-aws-athena/actions/workflows/tfsec.yml/badge.svg"
-    url: ""
+    url: "https://github.com/clouddrove/terraform-aws-athena/actions/workflows/tfsec.yml"
   - name: "Licence"
     image: "https://img.shields.io/badge/License-APACHE-blue.svg"
     url: "LICENSE.md"
+  - name: "Changelog"
+    image: "https://img.shields.io/badge/Changelog-blue"
+    url: "CHANGELOG.md"
 
 prerequesties:
-  - name: Terraform 1.5.3
+  - name: Terraform
     url: https://learn.hashicorp.com/terraform/getting-started/install.html
+    version: ">= 1.6.6"
+
+providers:
+  - name: aws
+    url: https://aws.amazon.com/
+    version: ">= 5.31.0"
+
+module_dependencies:
+  - name: Labels Module
+    url: https://github.com/clouddrove/terraform-aws-labels
+    description: Provides resource tagging.
+  - name: S3 Bucket Module
+    url: https://github.com/clouddrove/terraform-aws-s3.git
+    description: Provides S3 Bucket resources.
+  - name: AWS KMS Module
+    url: https://github.com/clouddrove/terraform-aws-kms.git
+    description: Provides AWS KMS Resources.
     
 #  description of this project
 description: |-
   Terraform Athena module to create new modules using this as baseline
-# extra content
-include:
-  - "terraform.md"
 
 # How to use this project
 usage: |-
