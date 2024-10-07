@@ -1,8 +1,8 @@
-# Managed By : CloudDrove 
+# Managed By : CloudDrove
 # Copyright @ CloudDrove. All Right Reserved.
 
-##----------------------------------------------------------------------------- 
-## Labels module callled that will be used for naming and tags.   
+##-----------------------------------------------------------------------------
+## Labels module callled that will be used for naming and tags.
 ##-----------------------------------------------------------------------------
 module "labels" {
   source      = "clouddrove/labels/aws"
