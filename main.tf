@@ -39,7 +39,7 @@ module "s3_bucket" {
 ##------------------------------------------------------------------------------
 module "kms_workgroup" {
   source                  = "clouddrove/kms/aws"
-  version                 = "1.3.1"
+  version                 = "1.3.2"
   kms_key_enabled         = var.enabled && var.create_workgroup_kms_key
   name                    = format("%s-workgroup-key", var.name)
   environment             = var.environment
@@ -49,7 +49,7 @@ module "kms_workgroup" {
 
 module "kms_database" {
   source                  = "clouddrove/kms/aws"
-  version                 = "1.3.1"
+  version                 = "1.3.2"
   enabled                 = var.enabled && var.create_database_kms_key
   name                    = format("%s-database-key", var.name)
   environment             = var.environment
