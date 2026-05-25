@@ -43,3 +43,4 @@
 | kms\_key\_arn | ARN of KMS key used by Athena. |
 | named\_queries | List of newly created Athena named queries. |
 | workgroup\_id | ID of newly created Athena workgroup. |
+
